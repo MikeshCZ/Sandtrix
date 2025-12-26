@@ -9,20 +9,17 @@ void Particle::Draw(int offset_x, int offset_y, bool enhanced, float scale) {
     int base_x = offset_x + (int)x * PARTICLE_SIZE;
     int base_y = offset_y + (int)y * PARTICLE_SIZE;
 
-    // Vypočítat zmenšenou velikost a centrovat
     int scaled_size = (int)(PARTICLE_SIZE * scale);
     int size_diff = PARTICLE_SIZE - scaled_size;
     int x_pos = base_x + size_diff / 2;
     int y_pos = base_y + size_diff / 2;
 
     if (enhanced) {
-        // Zvýraznění pro částice před výbuchem
         Color inner = BrightenColor(color, 1.2f + (scale - 1.0f) * 0.5f);
         DrawRectangle(x_pos, y_pos, scaled_size, scaled_size, inner);
         Color bright = BrightenColor(color, 1.4f + (scale - 1.0f) * 0.8f);
         DrawRectangleLines(x_pos, y_pos, scaled_size, scaled_size, bright);
 
-        // Přidat glow efekt při větším scale
         if (scale > 1.2f) {
             Color glow = color;
             glow.a = (unsigned char)(80 * (scale - 1.0f));

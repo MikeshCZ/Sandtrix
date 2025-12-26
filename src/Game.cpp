@@ -59,7 +59,6 @@ void Game::SpawnTetromino() {
 
 void Game::HandleInput() {
     if (state == INTRO_SCREEN) {
-        // Umožnit přeskočení intra
         if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
             state = MAIN_MENU;
         }
@@ -84,10 +83,8 @@ void Game::HandleInput() {
         }
         if (IsKeyPressed(KEY_ENTER)) {
             if (settings_menu_selected == 3) {
-                // Přepnout hudbu
                 MUSIC_ENABLED = !MUSIC_ENABLED;
             } else {
-                // Změnit obtížnost
                 int colors[] = {3, 4, 6};
                 NUM_COLORS = colors[settings_menu_selected];
                 state = MAIN_MENU;
@@ -123,7 +120,6 @@ void Game::HandleInput() {
 
         if (game_over || !current_tetromino || !current_tetromino->is_active) return;
 
-        // Rotace
         if (IsKeyPressed(KEY_UP)) {
             int old_rotation = current_tetromino->rotation;
             current_tetromino->Rotate();
@@ -133,7 +129,6 @@ void Game::HandleInput() {
             }
         }
 
-        // Pohyb vlevo
         bool moved = false;
         if (IsKeyDown(KEY_LEFT) && !moved) {
             if (move_counter_left == 0) {
@@ -158,7 +153,6 @@ void Game::HandleInput() {
             move_counter_left = 0;
         }
 
-        // Pohyb vpravo
         if (IsKeyDown(KEY_RIGHT) && !moved) {
             if (move_counter_right == 0) {
                 current_tetromino->Move(1, 0);
@@ -182,7 +176,6 @@ void Game::HandleInput() {
             move_counter_right = 0;
         }
 
-        // Pohyb dolů
         if (IsKeyDown(KEY_DOWN)) {
             if (move_counter_down == 0) {
                 fall_counter = FALL_SPEED;
@@ -223,9 +216,7 @@ void Game::Update() {
             if (board->CheckCollision(current_tetromino->particles)) {
                 current_tetromino->Move(0, -1);
 
-                for (auto& p : current_tetromino->particles) {
-                    p.settled = false;
-                }
+                for (auto& p : current_tetromino->particles) p.settled = false;
 
                 board->AddParticles(current_tetromino->particles);
                 board->grid_dirty = true;
@@ -234,10 +225,7 @@ void Game::Update() {
         }
     }
 
-    // Gravitace každý frame pro rychlejší pád
     board->ApplyGravity();
-
-    // Animace výbuchu a explozní efekty
     board->UpdatePreExplosionAnimation();
     board->UpdateExplosions();
     board->UpdateShake();
@@ -260,10 +248,8 @@ void Game::DrawGradientBackground(Color top, Color bottom) {
 void Game::DrawMainMenu() {
     DrawGradientBackground(BG_COLOR_TOP, BG_COLOR_BOTTOM);
 
-    // Nadpis
     DrawText("SAND TETRIS", SCREEN_WIDTH / 2 - MeasureText("SAND TETRIS", 72) / 2, 150, 72, WHITE);
 
-    // Dekorativní částice
     float time = GetTime();
     for (int i = 0; i < 20; i++) {
         float x = 100 + i * 35 + sin(time + i * 0.5f) * 20;
@@ -317,7 +303,6 @@ void Game::DrawSettingsMenu() {
 }
 
 void Game::DrawPauseMenu() {
-    // Tmavý overlay
     DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, ColorWithAlpha(BLACK, 200));
 
     DrawText("PAUZA", SCREEN_WIDTH / 2 - MeasureText("PAUZA", 72) / 2, 150, 72, WHITE);
@@ -352,7 +337,6 @@ void Game::DrawGame() {
         current_tetromino->Draw(shake_offset_x, shake_offset_y);
     }
 
-    // UI panel
     int panel_x = 520;
     int panel_y = 50;
     int panel_width = 250;
@@ -361,11 +345,9 @@ void Game::DrawGame() {
     DrawRectangle(panel_x, panel_y, panel_width, panel_height, ColorWithAlpha(Color{30, 30, 45, 255}, 200));
     DrawRectangleLines(panel_x, panel_y, panel_width, panel_height, Color{100, 100, 150, 255});
 
-    // Skóre
     DrawText("SKÓRE", panel_x + 20, panel_y + 20, 28, Color{150, 150, 200, 255});
     DrawText(TextFormat("%d", score), panel_x + 20, panel_y + 50, 48, WHITE);
 
-    // Další kostka
     DrawText("DALŠÍ KOSTKA", panel_x + 20, panel_y + 120, 28, Color{150, 150, 200, 255});
 
     if (next_tetromino) {
@@ -410,7 +392,6 @@ void Game::DrawGame() {
         }
     }
 
-    // Obtížnost
     DrawText("OBTÍŽNOST", panel_x + 20, panel_y + 335, 28, Color{150, 150, 200, 255});
 
     const char* diff_names[] = {"Lehká", "Normální", "Těžká"};
@@ -418,7 +399,6 @@ void Game::DrawGame() {
     int diff_idx = (NUM_COLORS == 3) ? 0 : (NUM_COLORS == 4) ? 1 : 2;
     DrawText(diff_names[diff_idx], panel_x + 20, panel_y + 365, 36, diff_colors[diff_idx]);
 
-    // Game over
     if (game_over) {
         DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, ColorWithAlpha(BLACK, 180));
 
@@ -464,7 +444,6 @@ void Game::Draw() {
             break;
     }
 
-    // Zobrazit FPS a statistiky v levém horním rohu (ne během intra)
     if (state != INTRO_SCREEN) {
         int particle_count = (board && state == PLAYING) ? board->particles.size() : 0;
         DrawText(TextFormat("FPS: %d | Particles: %d", GetFPS(), particle_count), 10, 10, 20, Color{0, 255, 0, 255});
@@ -481,27 +460,20 @@ void Game::Run() {
     Music music = LoadMusicStream("assets/music.ogg");
     SetMusicVolume(music, 1.0f);
 
-    // Spustit hudbu pokud je povolená
-    if (MUSIC_ENABLED) {
-        PlayMusicStream(music);
-    }
+    if (MUSIC_ENABLED) PlayMusicStream(music);
 
     while (!WindowShouldClose()) {
         HandleInput();
         Update();
         Draw();
 
-        // Aktualizovat stav hudby podle nastavení
         if (MUSIC_ENABLED && !IsMusicStreamPlaying(music)) {
             PlayMusicStream(music);
         } else if (!MUSIC_ENABLED && IsMusicStreamPlaying(music)) {
             StopMusicStream(music);
         }
 
-        // Aktualizovat stream pouze pokud hraje
-        if (IsMusicStreamPlaying(music)) {
-            UpdateMusicStream(music);
-        }
+        if (IsMusicStreamPlaying(music)) UpdateMusicStream(music);
     }
 
     CloseWindow();

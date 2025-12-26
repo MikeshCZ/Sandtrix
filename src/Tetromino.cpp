@@ -17,8 +17,6 @@ void Tetromino::GenerateParticles() {
     particles.clear();
     auto shape = GetShape(shape_type, rotation);
 
-    // OPTIMALIZACE: Sníženo z 10x10 na 5x5 částic na blok = 4x méně částic!
-    constexpr int PARTICLES_PER_BLOCK = 5;  // Bylo 10, nyní 5
     for (auto& block : shape) {
         int bx = (int)block.x;
         int by = (int)block.y;
