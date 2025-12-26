@@ -1,2 +1,2 @@
 # Sandtrix
-Sand Tetris
+Sand Tetris created in Raylib C++.
