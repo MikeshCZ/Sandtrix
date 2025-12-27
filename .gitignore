@@ -33,6 +33,7 @@
 
 # Build folder
 build/
+bin/
 
 # MacOS
 .DS_Store
