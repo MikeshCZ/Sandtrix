@@ -14,7 +14,6 @@ public:
     Color color;                // Barva částice
     int velocity_y;             // Vertikální rychlost (pro gravitaci)
     bool settled;               // Příznak, zda částice usedla (nepohybuje se)
-    bool fully_surrounded;      // Příznak, zda je obklopena ze všech stran (optimalizace)
     float brightness;           // Náhodná variace jasu (0.8 - 1.2)
 
     /**

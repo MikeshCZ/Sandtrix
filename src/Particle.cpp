@@ -3,7 +3,7 @@
 #include "Utils.hpp"
 
 Particle::Particle(float x, float y, Color color)
-    : x(x), y(y), color(color), velocity_y(0), settled(false), fully_surrounded(false), brightness(1.0f) {}
+    : x(x), y(y), color(color), velocity_y(0), settled(false), brightness(1.0f) {}
 
 void Particle::Draw(int offset_x, int offset_y, bool enhanced, float scale) {
     int base_x = offset_x + (int)x * PARTICLE_SIZE;

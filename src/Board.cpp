@@ -7,7 +7,7 @@
 
 Board::Board() : width(BOARD_WIDTH * PARTICLES_PER_BLOCK), height(BOARD_HEIGHT * PARTICLES_PER_BLOCK),
           shake_amount(0), shake_duration(0), dir_index(0),
-          grid_dirty(true), surrounded_check_counter(0),
+          grid_dirty(true),
           explosion_state(ExplosionState::NONE), explosion_timer(0),
           explosion_flash_color(WHITE) {
     grid.resize(height, std::vector<Particle*>(width, nullptr));
@@ -123,54 +123,19 @@ void Board::ApplyGravity() {
     }
     if (!has_unsettled) return;
 
-    surrounded_check_counter++;
-    if (surrounded_check_counter >= 10) {
-        surrounded_check_counter = 0;
-
-        for (auto p : particles) {
-            if (!p->settled) {
-                p->fully_surrounded = false;
-                continue;
-            }
-
-            int px = (int)p->x;
-            int py = (int)p->y;
-
-            if (px <= 0 || px >= width - 1 || py <= 0 || py >= height - 1) {
-                p->fully_surrounded = false;
-                continue;
-            }
-
-            bool surrounded = true;
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dx = -1; dx <= 1; dx++) {
-                    if (dx == 0 && dy == 0) continue;
-                    if (grid[py + dy][px + dx] == nullptr) {
-                        surrounded = false;
-                        break;
-                    }
-                }
-                if (!surrounded) break;
-            }
-            p->fully_surrounded = surrounded;
-        }
-    }
-
     for (auto p : particles) {
-        if (p->fully_surrounded) continue;
         int px = (int)p->x;
         int py = (int)p->y;
         if (p->settled && py >= 0 && py + 1 < height && px >= 0 && px < width) {
             if (grid[py + 1][px] == nullptr) {
                 p->settled = false;
-                p->fully_surrounded = false;
             }
         }
     }
 
     std::vector<Particle*> unsettled;
     for (auto p : particles) {
-        if (!p->settled && !p->fully_surrounded) {
+        if (!p->settled) {
             unsettled.push_back(p);
         }
     }
@@ -382,7 +347,8 @@ void Board::UpdatePreExplosionAnimation() {
             particles_to_explode.clear();
             particle_scale_factors.clear();
             explosion_state = ExplosionState::NONE;
-            grid_dirty = true;
+
+            RebuildGrid();
         }
     }
 }

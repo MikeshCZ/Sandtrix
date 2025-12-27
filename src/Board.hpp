@@ -31,7 +31,6 @@ public:
 
     int shake_amount, shake_duration, dir_index;                   // Parametry třesení obrazovky
     bool grid_dirty;                                               // Příznak pro rebuild mříže
-    int surrounded_check_counter;                                  // Počítadlo pro periodickou kontrolu obklopení
 
     ExplosionState explosion_state;                                // Aktuální stav výbuchu
     int explosion_timer;                                           // Časovač výbuchové animace
