@@ -27,6 +27,10 @@ public:
     int move_counter_left, move_counter_right, move_counter_down;  // Zpoždění pro plynulé pohyby
     int main_menu_selected, settings_menu_selected, pause_menu_selected;  // Vybrané položky v menu
 
+private:
+    bool should_exit;  // Příznak požadavku na ukončení aplikace
+
+public:
     /**
      * Konstruktor - inicializuje herní okno a základní komponenty.
      */

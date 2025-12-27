@@ -8,7 +8,7 @@ Game::Game() : state(INTRO_SCREEN), board(nullptr), current_tetromino(nullptr),
          next_tetromino(nullptr), score(0), game_over(false), fall_counter(0),
          offset_x(50), offset_y(50), move_counter_left(0), move_counter_right(0),
          move_counter_down(0), main_menu_selected(0), settings_menu_selected(0),
-         pause_menu_selected(0), intro(nullptr) {
+         pause_menu_selected(0), intro(nullptr), should_exit(false) {
     intro = new Intro("SAND TETRIS", SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
@@ -72,7 +72,7 @@ void Game::HandleInput() {
         if (IsKeyPressed(KEY_ENTER)) {
             if (main_menu_selected == 0) NewGame();
             else if (main_menu_selected == 1) state = SETTINGS;
-            else CloseWindow();
+            else should_exit = true;
         }
     } else if (state == SETTINGS) {
         if (IsKeyPressed(KEY_UP)) {
@@ -103,7 +103,7 @@ void Game::HandleInput() {
         if (IsKeyPressed(KEY_ENTER)) {
             if (pause_menu_selected == 0) state = PLAYING;
             else if (pause_menu_selected == 1) state = MAIN_MENU;
-            else CloseWindow();
+            else should_exit = true;
         }
         if (IsKeyPressed(KEY_ESCAPE)) {
             state = PLAYING;
@@ -454,6 +454,7 @@ void Game::Draw() {
 
 void Game::Run() {
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Sand Tetris");
+    SetExitKey(KEY_NULL);
     SetTargetFPS(FPS);
 
     InitAudioDevice();
@@ -462,7 +463,7 @@ void Game::Run() {
 
     if (MUSIC_ENABLED) PlayMusicStream(music);
 
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose() && !should_exit) {
         HandleInput();
         Update();
         Draw();
@@ -476,5 +477,8 @@ void Game::Run() {
         if (IsMusicStreamPlaying(music)) UpdateMusicStream(music);
     }
 
+    // Cleanup před zavřením okna
+    UnloadMusicStream(music);
+    CloseAudioDevice();
     CloseWindow();
 }
