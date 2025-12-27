@@ -4,6 +4,7 @@
 #include "Shapes.hpp"
 #include <cmath>
 
+// Konstruktor - inicializace hry
 Game::Game() : state(INTRO_SCREEN), board(nullptr), current_tetromino(nullptr),
          next_tetromino(nullptr), score(0), game_over(false), fall_counter(0),
          offset_x(50), offset_y(50), move_counter_left(0), move_counter_right(0),
@@ -11,9 +12,10 @@ Game::Game() : state(INTRO_SCREEN), board(nullptr), current_tetromino(nullptr),
          pause_menu_selected(0), intro(nullptr), should_exit(false),
          active_gamepad(-1), gamepad_menu_delay(0),
          gamepad_move_delay_left(0), gamepad_move_delay_right(0) {
+    // Vytvořit úvodní animaci
     intro = new Intro(GAME_NAME.c_str(), SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    // Detekce připojeného gamepadu při startu
+    // Detekce připojeného gamepadu při startu (max 4 gamepady)
     for (int i = 0; i < 4; i++) {
         if (IsGamepadAvailable(i)) {
             active_gamepad = i;
@@ -22,6 +24,7 @@ Game::Game() : state(INTRO_SCREEN), board(nullptr), current_tetromino(nullptr),
     }
 }
 
+// Destruktor - cleanup všech alokovaných objektů
 Game::~Game() {
     if (board) delete board;
     if (current_tetromino) delete current_tetromino;
@@ -29,14 +32,19 @@ Game::~Game() {
     if (intro) delete intro;
 }
 
+// Spustit novou hru - reset všech herních hodnot
 void Game::NewGame() {
+    // Smazat staré objekty pokud existují
     if (board) delete board;
     if (current_tetromino) delete current_tetromino;
     if (next_tetromino) delete next_tetromino;
 
+    // Vytvořit nové herní objekty
     board = new Board();
     current_tetromino = nullptr;
     next_tetromino = new Tetromino(0, 0);
+
+    // Reset herního stavu
     score = 0;
     game_over = false;
     fall_counter = 0;
@@ -44,24 +52,31 @@ void Game::NewGame() {
     move_counter_right = 0;
     move_counter_down = 0;
 
+    // Spawn prvního tetromina a přejít do herního stavu
     SpawnTetromino();
     state = PLAYING;
 }
 
+// Vytvořit nové tetromino na vrcholu desky
 void Game::SpawnTetromino() {
     if (current_tetromino) delete current_tetromino;
 
+    // Vytvořit tetromino na středu desky (x), na vrcholu (y = 0)
     current_tetromino = new Tetromino(BOARD_WIDTH / 2 - 2, 0);
+
+    // Zkopírovat tvar a barvu z next_tetromino (preview)
     if (next_tetromino) {
         current_tetromino->shape_type = next_tetromino->shape_type;
         current_tetromino->color = next_tetromino->color;
         current_tetromino->rotation = 0;
         current_tetromino->GenerateParticles();
 
+        // Vytvořit nové next_tetromino
         delete next_tetromino;
         next_tetromino = new Tetromino(0, 0);
     }
 
+    // Kontrola game over - pokud nové tetromino koliduje hned při spawnu
     if (board->CheckCollision(current_tetromino->particles)) {
         game_over = true;
     }
@@ -361,7 +376,9 @@ void Game::HandleInput() {
     }
 }
 
+// Aktualizace herní logiky
 void Game::Update() {
+    // Update úvodní animace
     if (state == INTRO_SCREEN) {
         if (intro) {
             intro->UpdateLogoScreen();
@@ -372,20 +389,26 @@ void Game::Update() {
         return;
     }
 
+    // Update pouze když je hra aktivní
     if (state != PLAYING || game_over) return;
 
+    // Update padajícího tetromina
     if (current_tetromino && current_tetromino->is_active) {
         fall_counter++;
 
+        // Automatický pád tetromina podle FALL_SPEED
         if (fall_counter >= FALL_SPEED) {
             fall_counter = 0;
             current_tetromino->Move(0, 1);
 
+            // Pokud tetromino narazilo, umístit ho na desku
             if (board->CheckCollision(current_tetromino->particles)) {
                 current_tetromino->Move(0, -1);
 
+                // Všechny částice budou podléhat gravitaci
                 for (auto& p : current_tetromino->particles) p.settled = false;
 
+                // Přidat částice na desku a spawn nového tetromina
                 board->AddParticles(current_tetromino->particles);
                 board->grid_dirty = true;
                 SpawnTetromino();
@@ -393,11 +416,13 @@ void Game::Update() {
         }
     }
 
+    // Update fyziky a výbuchů
     board->ApplyGravity();
     board->UpdatePreExplosionAnimation();
     board->UpdateExplosions();
     board->UpdateShake();
 
+    // Kontrola propojených částic a výpočet skóre
     int removed = board->CheckHorizontalConnections();
     if (removed > 0) {
         score += removed;
