@@ -1,12 +1,14 @@
 #include "Intro.hpp"
 
-Intro::Intro (const char *title, int windowWidth, int windowHeight) : title (title)
+Intro::Intro (const char *title, int winWidth, int winHeight) : title (title)
 {
   finishScreen = false;
   framesCounter = 0;
   lettersCount = 0;
 
   // Uložit rozměry okna při vytvoření
+  windowWidth = winWidth;
+  windowHeight = winHeight;
 
   logoPositionX = windowWidth / 2 - 128;
   logoPositionY = windowHeight / 2 - 128;
@@ -101,8 +103,6 @@ Intro::UpdateLogoScreen ()
 void
 Intro::DrawLogoScreen ()
 {
-  int windowWidth = GetRenderWidth();
-  int windowHeight = GetRenderHeight();
 
   if (state == 0) // Draw blinking top-left square corner
     {

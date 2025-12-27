@@ -48,4 +48,6 @@ private:
   float alpha{};               // Průhlednost pro fade efekt
   float alphaTitle{};          // Průhlednost titulku
   float alphaPowered{};        // Průhlednost "Powered by" textu
+  int windowWidth{};           // Šířka okna
+  int windowHeight{};          // Výška okna
 };

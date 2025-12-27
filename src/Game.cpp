@@ -11,7 +11,7 @@ Game::Game() : state(INTRO_SCREEN), board(nullptr), current_tetromino(nullptr),
          pause_menu_selected(0), intro(nullptr), should_exit(false),
          active_gamepad(-1), gamepad_menu_delay(0),
          gamepad_move_delay_left(0), gamepad_move_delay_right(0) {
-    intro = new Intro("SAND TETRIS", SCREEN_WIDTH, SCREEN_HEIGHT);
+    intro = new Intro("Sandtrix", SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // Detekce připojeného gamepadu při startu
     for (int i = 0; i < 4; i++) {
