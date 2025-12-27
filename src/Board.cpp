@@ -379,8 +379,29 @@ void Board::UpdatePreExplosionAnimation() {
                 }
             }
 
-            // Všechny zbylé částice se stávají neusazenými (gravitace je znovu aplikuje)
+            // Simulace otřesu desky - přidáme částicím malé náhodné posunutí
+            std::uniform_int_distribution<> shake_dist(-10, 10);
+            std::uniform_real_distribution<> vertical_shake(0.0f, 20.0f);
+
             for (auto p : particles) {
+                // Horizontální posunutí (vlevo/vpravo)
+                int dx = shake_dist(gen);
+                int new_x = (int)p->x + dx;
+
+                // Vertikální "vyhození" nahoru (simulace odrazu od země)
+                float vertical_impulse = vertical_shake(gen);
+                p->velocity_y = -(int)vertical_impulse; // Záporná rychlost = pohyb nahoru
+
+                // Aplikuj horizontální posunutí pokud je validní
+                if (new_x >= 0 && new_x < width) {
+                    // Zkontroluj jestli není kolize
+                    int py = (int)p->y;
+                    if (py >= 0 && py < height && grid[py][new_x] == nullptr) {
+                        p->x = new_x;
+                    }
+                }
+
+                // Všechny částice se stávají neusazenými (gravitace je znovu aplikuje)
                 p->settled = false;
             }
 
