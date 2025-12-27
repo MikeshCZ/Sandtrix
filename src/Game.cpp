@@ -413,9 +413,12 @@ void Game::Update() {
         current_fall_speed = std::max(10, FALL_SPEED - (speed_level * 5));
     }
 
-    // Pokud čekáme na usazení částic, spawn nové tetromino až když jsou usazené
+    // Pokud čekáme na usazení částic a dokončení výbuchů
     if (waiting_for_settlement) {
-        if (board->AreAllParticlesSettled()) {
+        // Spawn nové tetromino pouze když:
+        // 1. Všechny částice jsou usazené
+        // 2. Žádný výbuch neprobíhá (včetně řetězových reakcí)
+        if (board->AreAllParticlesSettled() && board->explosion_state == Board::ExplosionState::NONE) {
             waiting_for_settlement = false;
             SpawnTetromino();
         }
