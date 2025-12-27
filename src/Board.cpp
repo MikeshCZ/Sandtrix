@@ -237,31 +237,6 @@ void Board::ApplyGravity() {
                     break;
                 }
             }
-
-            if (!moved) {
-                for (int distance = 1; distance <= 2 && !moved; distance++) {
-                    for (int i = 0; i < 2; i++) {
-                        int dx = horizontal_dirs[dir_index][i];
-                        int new_x = old_x + (dx * distance);
-
-                        bool path_clear = true;
-                        for (int step = 1; step <= distance; step++) {
-                            int check_x = old_x + (dx * step);
-                            if (check_x < 0 || check_x >= width || grid[old_y][check_x] != nullptr) {
-                                path_clear = false;
-                                break;
-                            }
-                        }
-
-                        if (path_clear && new_x >= 0 && new_x < width) {
-                            particle->x = new_x;
-                            grid[old_y][new_x] = particle;
-                            moved = true;
-                            break;
-                        }
-                    }
-                }
-            }
         }
 
         if (!moved) {
