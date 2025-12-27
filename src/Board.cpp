@@ -111,6 +111,15 @@ void Board::RebuildGrid() {
     grid_dirty = false;
 }
 
+bool Board::AreAllParticlesSettled() {
+    for (auto p : particles) {
+        if (!p->settled) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void Board::ApplyGravity() {
     // Pokud je mřížka dirty, rebuild ji
     if (grid_dirty) RebuildGrid();

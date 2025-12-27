@@ -97,6 +97,12 @@ public:
     void ApplyGravity();
 
     /**
+     * Zkontroluje, zda jsou všechny částice na desce usazené.
+     * @return true pokud jsou všechny částice settled, jinak false
+     */
+    bool AreAllParticlesSettled();
+
+    /**
      * Najde všechny propojené částice stejné barvy pomocí BFS algoritmu.
      * Částice musí být v kontaktu horizontálně nebo vertikálně.
      * @param start Startovní částice pro BFS

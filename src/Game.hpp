@@ -23,6 +23,8 @@ public:
     int score;                       // Skóre hráče
     bool game_over;                  // Příznak konce hry
     int fall_counter;                // Počítadlo pro automatický pád tetromina
+    int current_fall_speed;          // Aktuální rychlost pádu (snižuje se s vyšším skóre)
+    bool waiting_for_settlement;     // Čeká na usazení částic před spawnem nového tetromina
     int offset_x, offset_y;          // Posun desky na obrazovce
 
     int move_counter_left, move_counter_right, move_counter_down;  // Zpoždění pro plynulé pohyby

@@ -7,6 +7,7 @@
 // Konstruktor - inicializace hry
 Game::Game() : state(INTRO_SCREEN), board(nullptr), current_tetromino(nullptr),
          next_tetromino(nullptr), score(0), game_over(false), fall_counter(0),
+         current_fall_speed(FALL_SPEED), waiting_for_settlement(false),
          offset_x(50), offset_y(50), move_counter_left(0), move_counter_right(0),
          move_counter_down(0), main_menu_selected(0), settings_menu_selected(0),
          pause_menu_selected(0), intro(nullptr), should_exit(false),
@@ -48,6 +49,8 @@ void Game::NewGame() {
     score = 0;
     game_over = false;
     fall_counter = 0;
+    current_fall_speed = FALL_SPEED;
+    waiting_for_settlement = false;
     move_counter_left = 0;
     move_counter_right = 0;
     move_counter_down = 0;
@@ -274,7 +277,7 @@ void Game::HandleInput() {
             return;
         }
 
-        if (game_over || !current_tetromino || !current_tetromino->is_active) return;
+        if (game_over || waiting_for_settlement || !current_tetromino || !current_tetromino->is_active) return;
 
         bool rotate = IsKeyPressed(KEY_UP);
 
@@ -392,31 +395,7 @@ void Game::Update() {
     // Update pouze když je hra aktivní
     if (state != PLAYING || game_over) return;
 
-    // Update padajícího tetromina
-    if (current_tetromino && current_tetromino->is_active) {
-        fall_counter++;
-
-        // Automatický pád tetromina podle FALL_SPEED
-        if (fall_counter >= FALL_SPEED) {
-            fall_counter = 0;
-            current_tetromino->Move(0, 1);
-
-            // Pokud tetromino narazilo, umístit ho na desku
-            if (board->CheckCollision(current_tetromino->particles)) {
-                current_tetromino->Move(0, -1);
-
-                // Všechny částice budou podléhat gravitaci
-                for (auto& p : current_tetromino->particles) p.settled = false;
-
-                // Přidat částice na desku a spawn nového tetromina
-                board->AddParticles(current_tetromino->particles);
-                board->grid_dirty = true;
-                SpawnTetromino();
-            }
-        }
-    }
-
-    // Update fyziky a výbuchů
+    // Update fyziky a výbuchů (vždy běží)
     board->ApplyGravity();
     board->UpdatePreExplosionAnimation();
     board->UpdateExplosions();
@@ -427,6 +406,49 @@ void Game::Update() {
     if (removed > 0) {
         score += removed;
         board->grid_dirty = true;
+
+        // Zvýšení rychlosti každých 1000 bodů
+        // Čím více bodů, tím rychleji padají bloky (minimálně 10 framů)
+        int speed_level = score / 1000;
+        current_fall_speed = std::max(10, FALL_SPEED - (speed_level * 5));
+    }
+
+    // Pokud čekáme na usazení částic, spawn nové tetromino až když jsou usazené
+    if (waiting_for_settlement) {
+        if (board->AreAllParticlesSettled()) {
+            waiting_for_settlement = false;
+            SpawnTetromino();
+        }
+        return; // Nepokračovat v updatu tetromina dokud čekáme
+    }
+
+    // Update padajícího tetromina
+    if (current_tetromino && current_tetromino->is_active) {
+        fall_counter++;
+
+        // Automatický pád tetromina podle current_fall_speed
+        if (fall_counter >= current_fall_speed) {
+            fall_counter = 0;
+            current_tetromino->Move(0, 1);
+
+            // Pokud tetromino narazilo, umístit ho na desku
+            if (board->CheckCollision(current_tetromino->particles)) {
+                current_tetromino->Move(0, -1);
+
+                // Všechny částice budou podléhat gravitaci
+                for (auto& p : current_tetromino->particles) p.settled = false;
+
+                // Přidat částice na desku
+                board->AddParticles(current_tetromino->particles);
+                board->grid_dirty = true;
+
+                // Okamžitě deaktivovat tetromino (zmizí z obrazovky)
+                current_tetromino->is_active = false;
+
+                // Začít čekat na usazení částic před spawnem nového tetromina
+                waiting_for_settlement = true;
+            }
+        }
     }
 }
 
