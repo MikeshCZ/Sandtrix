@@ -163,10 +163,10 @@ void Game::HandleInput() {
         }
 
         if (up) {
-            settings_menu_selected = (settings_menu_selected - 1 + 6) % 6;
+            settings_menu_selected = (settings_menu_selected - 1 + 7) % 7;
         }
         if (down) {
-            settings_menu_selected = (settings_menu_selected + 1) % 6;
+            settings_menu_selected = (settings_menu_selected + 1) % 7;
         }
         if (enter) {
             if (settings_menu_selected == 3) {
@@ -182,6 +182,14 @@ void Game::HandleInput() {
                         break;
                     }
                     next_gamepad = (next_gamepad + 1) % 4;
+                }
+            } else if (settings_menu_selected == 6) {
+                // Přepnutí jazyka
+                Language current = localization.GetLanguage();
+                if (current == Language::ENGLISH) {
+                    localization.SetLanguage(Language::CZECH);
+                } else {
+                    localization.SetLanguage(Language::ENGLISH);
                 }
             } else {
                 int colors[] = {3, 4, 6};
@@ -420,7 +428,11 @@ void Game::DrawMainMenu() {
         DrawCircle((int)x, (int)y, size, particle_color);
     }
 
-    const char* items[] = {"Nová hra", "Nastavení", "Konec"};
+    const char* items[] = {
+        localization.GetText(TextKey::MAIN_MENU_NEW_GAME),
+        localization.GetText(TextKey::MAIN_MENU_SETTINGS),
+        localization.GetText(TextKey::MAIN_MENU_EXIT)
+    };
     int y_start = 350;
     int y_spacing = 80;
 
@@ -438,28 +450,56 @@ void Game::DrawMainMenu() {
 void Game::DrawSettingsMenu() {
     DrawGradientBackground(BG_COLOR_TOP, BG_COLOR_BOTTOM);
 
-    DrawText("NASTAVENÍ", SCREEN_WIDTH / 2 - MeasureText("NASTAVENÍ", 72) / 2, 150, 72, WHITE);
+    const char* title = localization.GetText(TextKey::SETTINGS_TITLE);
+    DrawText(title, SCREEN_WIDTH / 2 - MeasureText(title, 72) / 2, 150, 72, WHITE);
 
-    const char* info = "Obtížnost určuje počet barev:";
+    const char* info = localization.GetText(TextKey::SETTINGS_DIFFICULTY_INFO);
     DrawText(info, SCREEN_WIDTH / 2 - MeasureText(info, 28) / 2, 250, 28, Color{200, 200, 220, 255});
 
     // Gamepad text
-    char gamepad_text[64];
+    char gamepad_text[128];
     if (active_gamepad >= 0 && IsGamepadAvailable(active_gamepad)) {
         const char* gamepad_name = GetGamepadName(active_gamepad);
-        snprintf(gamepad_text, sizeof(gamepad_text), "Gamepad: %s", gamepad_name ? gamepad_name : "Připojen");
+        snprintf(gamepad_text, sizeof(gamepad_text), "%s: %s",
+                 localization.GetText(TextKey::SETTINGS_GAMEPAD),
+                 gamepad_name ? gamepad_name : localization.GetText(TextKey::SETTINGS_GAMEPAD_CONNECTED));
     } else {
-        snprintf(gamepad_text, sizeof(gamepad_text), "Gamepad: Není připojen");
+        snprintf(gamepad_text, sizeof(gamepad_text), "%s: %s",
+                 localization.GetText(TextKey::SETTINGS_GAMEPAD),
+                 localization.GetText(TextKey::SETTINGS_GAMEPAD_NOT_CONNECTED));
     }
 
-    const char* items[] = {"Lehká (3 barvy)", "Normální (4 barvy)", "Těžká (6 barev)",
-                            MUSIC_ENABLED ? "Hudba: ZAPNUTO" : "Hudba: VYPNUTO",
-                            FPS_ENABLED ? "FPS: ZAPNUTO" : "FPS: VYPNUTO",
-                            gamepad_text};
+    // Music text
+    char music_text[64];
+    snprintf(music_text, sizeof(music_text), "%s: %s",
+             localization.GetText(TextKey::SETTINGS_MUSIC),
+             MUSIC_ENABLED ? localization.GetText(TextKey::SETTINGS_ON) : localization.GetText(TextKey::SETTINGS_OFF));
+
+    // FPS text
+    char fps_text[64];
+    snprintf(fps_text, sizeof(fps_text), "%s: %s",
+             localization.GetText(TextKey::SETTINGS_FPS),
+             FPS_ENABLED ? localization.GetText(TextKey::SETTINGS_ON) : localization.GetText(TextKey::SETTINGS_OFF));
+
+    // Language text
+    char language_text[64];
+    snprintf(language_text, sizeof(language_text), "%s: %s",
+             localization.GetText(TextKey::SETTINGS_LANGUAGE),
+             localization.GetCurrentLanguageName());
+
+    const char* items[] = {
+        localization.GetText(TextKey::SETTINGS_EASY),
+        localization.GetText(TextKey::SETTINGS_NORMAL),
+        localization.GetText(TextKey::SETTINGS_HARD),
+        music_text,
+        fps_text,
+        gamepad_text,
+        language_text
+    };
     int y_start = 290;
     int y_spacing = 60;
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 7; i++) {
         Color color = (i == settings_menu_selected) ? Color{255, 100, 0, 255} : WHITE;
         int text_width = MeasureText(items[i], 48);
         DrawText(items[i], SCREEN_WIDTH / 2 - text_width / 2, y_start + i * y_spacing, 48, color);
@@ -469,16 +509,21 @@ void Game::DrawSettingsMenu() {
         }
     }
 
-    const char* esc = "ESC = Zpět";
+    const char* esc = localization.GetText(TextKey::SETTINGS_BACK);
     DrawText(esc, SCREEN_WIDTH / 2 - MeasureText(esc, 28) / 2, 750, 28, Color{150, 150, 170, 255});
 }
 
 void Game::DrawPauseMenu() {
     DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, ColorWithAlpha(BLACK, 200));
 
-    DrawText("PAUZA", SCREEN_WIDTH / 2 - MeasureText("PAUZA", 72) / 2, 150, 72, WHITE);
+    const char* title = localization.GetText(TextKey::PAUSE_TITLE);
+    DrawText(title, SCREEN_WIDTH / 2 - MeasureText(title, 72) / 2, 150, 72, WHITE);
 
-    const char* items[] = {"Pokračovat", "Hlavní menu", "Konec"};
+    const char* items[] = {
+        localization.GetText(TextKey::PAUSE_RESUME),
+        localization.GetText(TextKey::PAUSE_MAIN_MENU),
+        localization.GetText(TextKey::PAUSE_EXIT)
+    };
     int y_start = 350;
     int y_spacing = 80;
 
@@ -516,10 +561,10 @@ void Game::DrawGame() {
     DrawRectangle(panel_x, panel_y, panel_width, panel_height, ColorWithAlpha(Color{30, 30, 45, 255}, 200));
     DrawRectangleLines(panel_x, panel_y, panel_width, panel_height, Color{100, 100, 150, 255});
 
-    DrawText("SKÓRE", panel_x + 20, panel_y + 20, 28, Color{150, 150, 200, 255});
+    DrawText(localization.GetText(TextKey::GAME_SCORE), panel_x + 20, panel_y + 20, 28, Color{150, 150, 200, 255});
     DrawText(TextFormat("%d", score), panel_x + 20, panel_y + 50, 48, WHITE);
 
-    DrawText("DALŠÍ KOSTKA", panel_x + 20, panel_y + 120, 28, Color{150, 150, 200, 255});
+    DrawText(localization.GetText(TextKey::GAME_NEXT_PIECE), panel_x + 20, panel_y + 120, 28, Color{150, 150, 200, 255});
 
     if (next_tetromino) {
         int preview_box_x = panel_x + 50;
@@ -563,25 +608,29 @@ void Game::DrawGame() {
         }
     }
 
-    DrawText("OBTÍŽNOST", panel_x + 20, panel_y + 335, 28, Color{150, 150, 200, 255});
+    DrawText(localization.GetText(TextKey::GAME_DIFFICULTY), panel_x + 20, panel_y + 335, 28, Color{150, 150, 200, 255});
 
-    const char* diff_names[] = {"Lehká", "Normální", "Těžká"};
     Color diff_colors[] = {{100, 255, 100, 255}, {255, 200, 100, 255}, {255, 100, 100, 255}};
     int diff_idx = (NUM_COLORS == 3) ? 0 : (NUM_COLORS == 4) ? 1 : 2;
+    const char* diff_names[] = {
+        localization.GetText(TextKey::DIFFICULTY_EASY),
+        localization.GetText(TextKey::DIFFICULTY_NORMAL),
+        localization.GetText(TextKey::DIFFICULTY_HARD)
+    };
     DrawText(diff_names[diff_idx], panel_x + 20, panel_y + 365, 36, diff_colors[diff_idx]);
 
     if (game_over) {
         DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, ColorWithAlpha(BLACK, 180));
 
-        const char* go_text = "GAME OVER";
+        const char* go_text = localization.GetText(TextKey::GAME_OVER_TITLE);
         int go_width = MeasureText(go_text, 96);
         DrawText(go_text, SCREEN_WIDTH / 2 - go_width / 2, SCREEN_HEIGHT / 2 - 50, 96, Color{255, 80, 80, 255});
 
-        const char* score_text = TextFormat("Skóre: %d", score);
+        const char* score_text = TextFormat("%s: %d", localization.GetText(TextKey::GAME_OVER_SCORE), score);
         int score_width = MeasureText(score_text, 48);
         DrawText(score_text, SCREEN_WIDTH / 2 - score_width / 2, SCREEN_HEIGHT / 2 + 30, 48, WHITE);
 
-        const char* esc_text = "ESC = Menu";
+        const char* esc_text = localization.GetText(TextKey::GAME_OVER_ESC);
         int esc_width = MeasureText(esc_text, 36);
         DrawText(esc_text, SCREEN_WIDTH / 2 - esc_width / 2, SCREEN_HEIGHT / 2 + 100, 36, Color{200, 200, 200, 255});
     }

@@ -5,6 +5,7 @@
 #include "Board.hpp"
 #include "Tetromino.hpp"
 #include "Intro.hpp"
+#include "Localization.hpp"
 
 /**
  * Hlavní herní třída řídící stav hry, vstupy a vykreslování.
