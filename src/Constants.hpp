@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 #include <random>
+#include <string>
 
 // =============================================================================
 // Herní konstanty - rozměry a timing
@@ -17,6 +18,8 @@ constexpr int CELL_SIZE = PARTICLE_SIZE * PARTICLES_PER_BLOCK;  // Velikost buň
 constexpr int FPS = 60;                        // Cílový počet snímků za sekundu
 constexpr int FALL_SPEED = 50;                 // Rychlost pádu tetromina (framů na posun)
 constexpr int MOVE_DELAY = 8;                  // Zpoždění pro plynulý pohyb při držení klávesy
+constexpr std::string GAME_NAME = "Sandtrix";        // Název hry
+constexpr std::string GAME_VERSION = "v0.2.0";       // Verze hry
 
 // =============================================================================
 // Barevná paleta

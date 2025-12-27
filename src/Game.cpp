@@ -11,7 +11,7 @@ Game::Game() : state(INTRO_SCREEN), board(nullptr), current_tetromino(nullptr),
          pause_menu_selected(0), intro(nullptr), should_exit(false),
          active_gamepad(-1), gamepad_menu_delay(0),
          gamepad_move_delay_left(0), gamepad_move_delay_right(0) {
-    intro = new Intro("Sandtrix", SCREEN_WIDTH, SCREEN_HEIGHT);
+    intro = new Intro(GAME_NAME.c_str(), SCREEN_WIDTH, SCREEN_HEIGHT);
 
     // Detekce připojeného gamepadu při startu
     for (int i = 0; i < 4; i++) {
@@ -406,7 +406,7 @@ void Game::DrawGradientBackground(Color top, Color bottom) {
 void Game::DrawMainMenu() {
     DrawGradientBackground(BG_COLOR_TOP, BG_COLOR_BOTTOM);
 
-    DrawText("SAND TETRIS", SCREEN_WIDTH / 2 - MeasureText("SAND TETRIS", 72) / 2, 150, 72, WHITE);
+    DrawText(GAME_NAME.c_str(), SCREEN_WIDTH / 2 - MeasureText(GAME_NAME.c_str(), 72) / 2, 150, 72, WHITE);
 
     float time = GetTime();
     for (int i = 0; i < 20; i++) {
@@ -621,7 +621,7 @@ void Game::Draw() {
 }
 
 void Game::Run() {
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Sand Tetris");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, GAME_NAME.c_str());
     SetExitKey(KEY_NULL);
     SetTargetFPS(FPS);
 
