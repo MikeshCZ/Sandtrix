@@ -163,15 +163,17 @@ void Game::HandleInput() {
         }
 
         if (up) {
-            settings_menu_selected = (settings_menu_selected - 1 + 5) % 5; // Změněno z 4 na 5 pro gamepad výběr
+            settings_menu_selected = (settings_menu_selected - 1 + 6) % 6;
         }
         if (down) {
-            settings_menu_selected = (settings_menu_selected + 1) % 5;
+            settings_menu_selected = (settings_menu_selected + 1) % 6;
         }
         if (enter) {
             if (settings_menu_selected == 3) {
                 MUSIC_ENABLED = !MUSIC_ENABLED;
             } else if (settings_menu_selected == 4) {
+                FPS_ENABLED = !FPS_ENABLED;
+            } else if (settings_menu_selected == 5) {
                 // Výběr gamepadu - přepne na další dostupný
                 int next_gamepad = (active_gamepad + 1) % 4;
                 for (int i = 0; i < 4; i++) {
@@ -452,11 +454,12 @@ void Game::DrawSettingsMenu() {
 
     const char* items[] = {"Lehká (3 barvy)", "Normální (4 barvy)", "Těžká (6 barev)",
                             MUSIC_ENABLED ? "Hudba: ZAPNUTO" : "Hudba: VYPNUTO",
+                            FPS_ENABLED ? "FPS: ZAPNUTO" : "FPS: VYPNUTO",
                             gamepad_text};
-    int y_start = 310;
-    int y_spacing = 65;
+    int y_start = 290;
+    int y_spacing = 60;
 
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 6; i++) {
         Color color = (i == settings_menu_selected) ? Color{255, 100, 0, 255} : WHITE;
         int text_width = MeasureText(items[i], 48);
         DrawText(items[i], SCREEN_WIDTH / 2 - text_width / 2, y_start + i * y_spacing, 48, color);
@@ -612,7 +615,7 @@ void Game::Draw() {
             break;
     }
 
-    if (state != INTRO_SCREEN) {
+    if (state != INTRO_SCREEN && FPS_ENABLED) {
         int particle_count = (board && state == PLAYING) ? board->particles.size() : 0;
         DrawText(TextFormat("FPS: %d | Particles: %d", GetFPS(), particle_count), 10, 10, 20, Color{0, 255, 0, 255});
     }

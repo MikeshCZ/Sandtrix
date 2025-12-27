@@ -44,4 +44,5 @@ constexpr Color DARK_GRAY = {30, 30, 40, 255};          // Tmavě šedá pro UI
 
 extern int NUM_COLORS;              // Počet dostupných barev (vypočítá se při běhu)
 extern bool MUSIC_ENABLED;          // Přepínač pro hudbu (nastavitelné v menu)
+extern bool FPS_ENABLED;            // Přepínač pro zobrazování FPS (nastavitelné v menu)
 extern std::mt19937 gen;            // Generátor náhodných čísel
