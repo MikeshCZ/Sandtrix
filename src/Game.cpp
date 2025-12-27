@@ -8,8 +8,18 @@ Game::Game() : state(INTRO_SCREEN), board(nullptr), current_tetromino(nullptr),
          next_tetromino(nullptr), score(0), game_over(false), fall_counter(0),
          offset_x(50), offset_y(50), move_counter_left(0), move_counter_right(0),
          move_counter_down(0), main_menu_selected(0), settings_menu_selected(0),
-         pause_menu_selected(0), intro(nullptr), should_exit(false) {
+         pause_menu_selected(0), intro(nullptr), should_exit(false),
+         active_gamepad(-1), gamepad_menu_delay(0),
+         gamepad_move_delay_left(0), gamepad_move_delay_right(0) {
     intro = new Intro("SAND TETRIS", SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // Detekce připojeného gamepadu při startu
+    for (int i = 0; i < 4; i++) {
+        if (IsGamepadAvailable(i)) {
+            active_gamepad = i;
+            break;
+        }
+    }
 }
 
 Game::~Game() {
@@ -57,59 +67,180 @@ void Game::SpawnTetromino() {
     }
 }
 
+void Game::UpdateGamepad() {
+    // Zkontroluj, jestli je aktivní gamepad stále připojen
+    if (active_gamepad >= 0 && !IsGamepadAvailable(active_gamepad)) {
+        active_gamepad = -1;
+    }
+
+    // Pokud není aktivní gamepad, zkus najít připojený
+    if (active_gamepad < 0) {
+        for (int i = 0; i < 4; i++) {
+            if (IsGamepadAvailable(i)) {
+                active_gamepad = i;
+                break;
+            }
+        }
+    }
+}
+
 void Game::HandleInput() {
     if (state == INTRO_SCREEN) {
-        if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
+        bool skip = IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE);
+
+        // Gamepad: A button pro skip
+        if (active_gamepad >= 0) {
+            skip = skip || IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN); // A button
+        }
+
+        if (skip) {
             state = MAIN_MENU;
         }
     } else if (state == MAIN_MENU) {
-        if (IsKeyPressed(KEY_UP)) {
+        bool up = IsKeyPressed(KEY_UP);
+        bool down = IsKeyPressed(KEY_DOWN);
+        bool enter = IsKeyPressed(KEY_ENTER);
+
+        // Gamepad: levá páčka nebo D-pad pro navigaci
+        if (active_gamepad >= 0) {
+            float axis_y = GetGamepadAxisMovement(active_gamepad, GAMEPAD_AXIS_LEFT_Y);
+            bool dpad_up = IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_LEFT_FACE_UP);
+            bool dpad_down = IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_LEFT_FACE_DOWN);
+
+            // Delay pro páčku aby se necyklovala moc rychle
+            if (gamepad_menu_delay == 0) {
+                if (axis_y < -0.5f || dpad_up) {
+                    up = true;
+                    gamepad_menu_delay = 15;
+                } else if (axis_y > 0.5f || dpad_down) {
+                    down = true;
+                    gamepad_menu_delay = 15;
+                }
+            } else {
+                gamepad_menu_delay--;
+            }
+
+            enter = enter || IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN); // A button
+        }
+
+        if (up) {
             main_menu_selected = (main_menu_selected - 1 + 3) % 3;
         }
-        if (IsKeyPressed(KEY_DOWN)) {
+        if (down) {
             main_menu_selected = (main_menu_selected + 1) % 3;
         }
-        if (IsKeyPressed(KEY_ENTER)) {
+        if (enter) {
             if (main_menu_selected == 0) NewGame();
             else if (main_menu_selected == 1) state = SETTINGS;
             else should_exit = true;
         }
     } else if (state == SETTINGS) {
-        if (IsKeyPressed(KEY_UP)) {
-            settings_menu_selected = (settings_menu_selected - 1 + 4) % 4;
+        bool up = IsKeyPressed(KEY_UP);
+        bool down = IsKeyPressed(KEY_DOWN);
+        bool enter = IsKeyPressed(KEY_ENTER);
+        bool escape = IsKeyPressed(KEY_ESCAPE);
+
+        // Gamepad: levá páčka nebo D-pad pro navigaci
+        if (active_gamepad >= 0) {
+            float axis_y = GetGamepadAxisMovement(active_gamepad, GAMEPAD_AXIS_LEFT_Y);
+            bool dpad_up = IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_LEFT_FACE_UP);
+            bool dpad_down = IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_LEFT_FACE_DOWN);
+
+            if (gamepad_menu_delay == 0) {
+                if (axis_y < -0.5f || dpad_up) {
+                    up = true;
+                    gamepad_menu_delay = 15;
+                } else if (axis_y > 0.5f || dpad_down) {
+                    down = true;
+                    gamepad_menu_delay = 15;
+                }
+            } else {
+                gamepad_menu_delay--;
+            }
+
+            enter = enter || IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN); // A button
+            escape = escape || IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT); // B button
         }
-        if (IsKeyPressed(KEY_DOWN)) {
-            settings_menu_selected = (settings_menu_selected + 1) % 4;
+
+        if (up) {
+            settings_menu_selected = (settings_menu_selected - 1 + 5) % 5; // Změněno z 4 na 5 pro gamepad výběr
         }
-        if (IsKeyPressed(KEY_ENTER)) {
+        if (down) {
+            settings_menu_selected = (settings_menu_selected + 1) % 5;
+        }
+        if (enter) {
             if (settings_menu_selected == 3) {
                 MUSIC_ENABLED = !MUSIC_ENABLED;
+            } else if (settings_menu_selected == 4) {
+                // Výběr gamepadu - přepne na další dostupný
+                int next_gamepad = (active_gamepad + 1) % 4;
+                for (int i = 0; i < 4; i++) {
+                    if (IsGamepadAvailable(next_gamepad)) {
+                        active_gamepad = next_gamepad;
+                        break;
+                    }
+                    next_gamepad = (next_gamepad + 1) % 4;
+                }
             } else {
                 int colors[] = {3, 4, 6};
                 NUM_COLORS = colors[settings_menu_selected];
                 state = MAIN_MENU;
             }
         }
-        if (IsKeyPressed(KEY_ESCAPE)) {
+        if (escape) {
             state = MAIN_MENU;
         }
     } else if (state == PAUSED) {
-        if (IsKeyPressed(KEY_UP)) {
+        bool up = IsKeyPressed(KEY_UP);
+        bool down = IsKeyPressed(KEY_DOWN);
+        bool enter = IsKeyPressed(KEY_ENTER);
+        bool escape = IsKeyPressed(KEY_ESCAPE);
+
+        // Gamepad: levá páčka nebo D-pad pro navigaci
+        if (active_gamepad >= 0) {
+            float axis_y = GetGamepadAxisMovement(active_gamepad, GAMEPAD_AXIS_LEFT_Y);
+            bool dpad_up = IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_LEFT_FACE_UP);
+            bool dpad_down = IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_LEFT_FACE_DOWN);
+
+            if (gamepad_menu_delay == 0) {
+                if (axis_y < -0.5f || dpad_up) {
+                    up = true;
+                    gamepad_menu_delay = 15;
+                } else if (axis_y > 0.5f || dpad_down) {
+                    down = true;
+                    gamepad_menu_delay = 15;
+                }
+            } else {
+                gamepad_menu_delay--;
+            }
+
+            enter = enter || IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN); // A button
+            escape = escape || IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT); // B button
+        }
+
+        if (up) {
             pause_menu_selected = (pause_menu_selected - 1 + 3) % 3;
         }
-        if (IsKeyPressed(KEY_DOWN)) {
+        if (down) {
             pause_menu_selected = (pause_menu_selected + 1) % 3;
         }
-        if (IsKeyPressed(KEY_ENTER)) {
+        if (enter) {
             if (pause_menu_selected == 0) state = PLAYING;
             else if (pause_menu_selected == 1) state = MAIN_MENU;
             else should_exit = true;
         }
-        if (IsKeyPressed(KEY_ESCAPE)) {
+        if (escape) {
             state = PLAYING;
         }
     } else if (state == PLAYING) {
-        if (IsKeyPressed(KEY_ESCAPE)) {
+        bool escape = IsKeyPressed(KEY_ESCAPE);
+
+        // Gamepad: START button = pauza/ESC
+        if (active_gamepad >= 0) {
+            escape = escape || IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_MIDDLE_RIGHT); // START button
+        }
+
+        if (escape) {
             if (game_over) {
                 state = MAIN_MENU;
             } else {
@@ -120,7 +251,14 @@ void Game::HandleInput() {
 
         if (game_over || !current_tetromino || !current_tetromino->is_active) return;
 
-        if (IsKeyPressed(KEY_UP)) {
+        bool rotate = IsKeyPressed(KEY_UP);
+
+        // Gamepad: B button = rotace
+        if (active_gamepad >= 0) {
+            rotate = rotate || IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) || IsGamepadButtonPressed(active_gamepad, GAMEPAD_BUTTON_LEFT_FACE_UP);
+        }
+
+        if (rotate) {
             int old_rotation = current_tetromino->rotation;
             current_tetromino->Rotate();
             if (board->CheckCollision(current_tetromino->particles)) {
@@ -130,7 +268,20 @@ void Game::HandleInput() {
         }
 
         bool moved = false;
-        if (IsKeyDown(KEY_LEFT) && !moved) {
+        bool left_pressed = IsKeyDown(KEY_LEFT);
+        bool right_pressed = IsKeyDown(KEY_RIGHT);
+
+        // Gamepad: levá páčka nebo D-pad doleva/doprava
+        if (active_gamepad >= 0) {
+            float axis_x = GetGamepadAxisMovement(active_gamepad, GAMEPAD_AXIS_LEFT_X);
+            bool dpad_left = IsGamepadButtonDown(active_gamepad, GAMEPAD_BUTTON_LEFT_FACE_LEFT);
+            bool dpad_right = IsGamepadButtonDown(active_gamepad, GAMEPAD_BUTTON_LEFT_FACE_RIGHT);
+
+            left_pressed = left_pressed || (axis_x < -0.5f) || dpad_left;
+            right_pressed = right_pressed || (axis_x > 0.5f) || dpad_right;
+        }
+
+        if (left_pressed && !moved) {
             if (move_counter_left == 0) {
                 current_tetromino->Move(-1, 0);
                 if (board->CheckCollision(current_tetromino->particles)) {
@@ -149,11 +300,11 @@ void Game::HandleInput() {
                     moved = true;
                 }
             }
-        } else if (!IsKeyDown(KEY_LEFT)) {
+        } else if (!left_pressed) {
             move_counter_left = 0;
         }
 
-        if (IsKeyDown(KEY_RIGHT) && !moved) {
+        if (right_pressed && !moved) {
             if (move_counter_right == 0) {
                 current_tetromino->Move(1, 0);
                 if (board->CheckCollision(current_tetromino->particles)) {
@@ -172,11 +323,18 @@ void Game::HandleInput() {
                     moved = true;
                 }
             }
-        } else if (!IsKeyDown(KEY_RIGHT)) {
+        } else if (!right_pressed) {
             move_counter_right = 0;
         }
 
-        if (IsKeyDown(KEY_DOWN)) {
+        bool down_pressed = IsKeyDown(KEY_DOWN);
+
+        // Gamepad: A button = rychlý pád
+        if (active_gamepad >= 0) {
+            down_pressed = down_pressed || IsGamepadButtonDown(active_gamepad, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonDown(active_gamepad, GAMEPAD_BUTTON_LEFT_FACE_DOWN);
+        }
+
+        if (down_pressed) {
             if (move_counter_down == 0) {
                 fall_counter = FALL_SPEED;
                 move_counter_down = 1;
@@ -283,12 +441,22 @@ void Game::DrawSettingsMenu() {
     const char* info = "Obtížnost určuje počet barev:";
     DrawText(info, SCREEN_WIDTH / 2 - MeasureText(info, 28) / 2, 250, 28, Color{200, 200, 220, 255});
 
-    const char* items[] = {"Lehká (3 barvy)", "Normální (4 barvy)", "Těžká (6 barev)",
-                            MUSIC_ENABLED ? "Hudba: ZAPNUTO" : "Hudba: VYPNUTO"};
-    int y_start = 330;
-    int y_spacing = 70;
+    // Gamepad text
+    char gamepad_text[64];
+    if (active_gamepad >= 0 && IsGamepadAvailable(active_gamepad)) {
+        const char* gamepad_name = GetGamepadName(active_gamepad);
+        snprintf(gamepad_text, sizeof(gamepad_text), "Gamepad: %s", gamepad_name ? gamepad_name : "Připojen");
+    } else {
+        snprintf(gamepad_text, sizeof(gamepad_text), "Gamepad: Není připojen");
+    }
 
-    for (int i = 0; i < 4; i++) {
+    const char* items[] = {"Lehká (3 barvy)", "Normální (4 barvy)", "Těžká (6 barev)",
+                            MUSIC_ENABLED ? "Hudba: ZAPNUTO" : "Hudba: VYPNUTO",
+                            gamepad_text};
+    int y_start = 310;
+    int y_spacing = 65;
+
+    for (int i = 0; i < 5; i++) {
         Color color = (i == settings_menu_selected) ? Color{255, 100, 0, 255} : WHITE;
         int text_width = MeasureText(items[i], 48);
         DrawText(items[i], SCREEN_WIDTH / 2 - text_width / 2, y_start + i * y_spacing, 48, color);
@@ -464,6 +632,7 @@ void Game::Run() {
     if (MUSIC_ENABLED) PlayMusicStream(music);
 
     while (!WindowShouldClose() && !should_exit) {
+        UpdateGamepad();
         HandleInput();
         Update();
         Draw();

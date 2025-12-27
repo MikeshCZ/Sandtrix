@@ -27,6 +27,10 @@ public:
     int move_counter_left, move_counter_right, move_counter_down;  // Zpoždění pro plynulé pohyby
     int main_menu_selected, settings_menu_selected, pause_menu_selected;  // Vybrané položky v menu
 
+    int active_gamepad;              // ID aktivního gamepadu (-1 pokud není připojen)
+    int gamepad_menu_delay;          // Zpoždění pro navigaci v menu gamepadem
+    int gamepad_move_delay_left, gamepad_move_delay_right;  // Zpoždění pro pohyb gamepadem
+
 private:
     bool should_exit;  // Příznak požadavku na ukončení aplikace
 
@@ -50,6 +54,11 @@ public:
      * Vytvoří nové tetromino a umístí ho na vrchol desky.
      */
     void SpawnTetromino();
+
+    /**
+     * Detekuje a aktualizuje aktivní gamepad.
+     */
+    void UpdateGamepad();
 
     /**
      * Zpracovává vstupy z klávesnice (pohyb, rotace, pauza, menu navigace).
